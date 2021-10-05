@@ -3,7 +3,8 @@ import os
 
 import requests
 
-current = os.path.dirname(os.path.abspath(__file__))
+data_path = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), 'ARScanner.json')
 
 
 def get(protocol: str, address: str) -> list:
@@ -13,7 +14,7 @@ def get(protocol: str, address: str) -> list:
             '{}://{}/peers'.format(protocol, address), timeout=2.0).json()  # a timeout is set to speed up the process
         assert isinstance(resp, list)
         return [('http', address) for address in resp]
-    except requests.exceptions.ConnectTimeout:
+    except requests.exceptions.Timeout:
         # this is a quite common exception, as some of the peers are unreachable due to firewall or proxy
         print('error', 'peer unreachable')
         return []
@@ -23,9 +24,12 @@ def get(protocol: str, address: str) -> list:
 
 
 if __name__ == '__main__':
-    with open(os.path.join(current, 'ARScanner.json'), 'r', encoding='utf-8') as fin:
-        gateways = json.load(fin)
-    gateways = set(map(tuple, gateways))
+    if os.path.isfile(data_path):
+        with open(data_path, 'r', encoding='utf-8') as fin:
+            gateways = json.load(fin)
+        gateways = set(map(tuple, gateways))
+    else:
+        gateways = {('https', 'arweave.net'), ('https', 'arweave.live')}
 
     try:
         while True:
@@ -37,6 +41,6 @@ if __name__ == '__main__':
                       'peers found (Press Ctrl + C and open ARScanner.json for details)')
     except KeyboardInterrupt:
         gateways = sorted(list(map(list, gateways)))
-        with open(os.path.join(current, 'ARScanner.json'), 'w', encoding='utf-8') as fout:
+        with open(data_path, 'w', encoding='utf-8') as fout:
             json.dump(gateways, fout,
                       ensure_ascii=False, indent=2)
