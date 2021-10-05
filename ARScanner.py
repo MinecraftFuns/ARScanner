@@ -8,11 +8,15 @@ current = os.path.dirname(os.path.abspath(__file__))
 
 def get(protocol: str, address: str) -> list:
     try:
-        print(protocol, address)
+        print('peer', '{}://{}/'.format(protocol, address))
         resp = requests.get(
-            '{}://{}/peers'.format(protocol, address), timeout=2.0).json()
+            '{}://{}/peers'.format(protocol, address), timeout=2.0).json()  # a timeout is set to speed up the process
         assert isinstance(resp, list)
         return [('http', address) for address in resp]
+    except requests.exceptions.ConnectTimeout:
+        # this is a quite common exception, as some of the peers are unreachable due to firewall or proxy
+        print('error', 'peer unreachable')
+        return []
     except Exception as err:
         print('error', err)
         return []
@@ -29,7 +33,8 @@ if __name__ == '__main__':
             for obj in copied:
                 protocol, address = obj
                 gateways.update(get(protocol, address))
-                print(len(gateways))
+                print(len(gateways),
+                      'peers found (Press Ctrl + C and open ARScanner.json for details)')
     except KeyboardInterrupt:
         gateways = sorted(list(map(list, gateways)))
         with open(os.path.join(current, 'ARScanner.json'), 'w', encoding='utf-8') as fout:
