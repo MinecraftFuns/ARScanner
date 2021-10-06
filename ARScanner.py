@@ -26,21 +26,27 @@ def get(protocol: str, address: str) -> list:
 if __name__ == '__main__':
     if os.path.isfile(data_path):
         with open(data_path, 'r', encoding='utf-8') as fin:
-            gateways = json.load(fin)
-        gateways = set(map(tuple, gateways))
+            data = json.load(fin)
+        gateways = set(map(tuple, data['all']))
     else:
         gateways = {('https', 'arweave.net'), ('https', 'arweave.live')}
+    reachable = set()
 
     try:
         while True:
             copied = gateways.copy()
             for obj in copied:
                 protocol, address = obj
-                gateways.update(get(protocol, address))
-                print(len(gateways),
-                      'peers found (Press Ctrl + C and open ARScanner.json for details)')
+                peers = get(protocol, address)
+                if len(peers) > 0:
+                    reachable.add(obj)
+                    gateways.update(peers)
+                print('{} peers found, {} peers reachable (Press Ctrl + C and open ARScanner.json for details)'
+                      .format(len(gateways), len(reachable)))
     except KeyboardInterrupt:
         gateways = sorted(list(map(list, gateways)))
+        reachable = sorted(list(map(list, reachable)))
+        data = {'all': gateways, 'reachable': reachable}
         with open(data_path, 'w', encoding='utf-8') as fout:
-            json.dump(gateways, fout,
+            json.dump(data, fout,
                       ensure_ascii=False, indent=2)
