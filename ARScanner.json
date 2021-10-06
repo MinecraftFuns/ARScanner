@@ -1,10 +1,13 @@
-[
-  [
-    "https",
-    "arweave.live"
+{
+  "all": [
+    [
+      "https",
+      "arweave.live"
+    ],
+    [
+      "https",
+      "arweave.net"
+    ]
   ],
-  [
-    "https",
-    "arweave.net"
-  ]
-]
+  "reachable": []
+}
